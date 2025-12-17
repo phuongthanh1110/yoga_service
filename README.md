@@ -44,6 +44,24 @@ curl -X POST "http://localhost:8000/pose/extract?stride=2" \
   | jq .
 ```
 
+## Expose locally with ngrok
+
+```bash
+# Install once (macOS):
+brew install ngrok/ngrok/ngrok
+
+# (Optional) set your auth token
+ngrok config add-authtoken <token>
+
+# Start your API locally (from above)
+uvicorn main:app --reload --port 8000
+
+# In a new terminal, tunnel port 8000
+ngrok http 8000
+```
+
+ngrok will print a public URL like `https://<id>.ngrok.io` that forwards to your local server. Use that URL for external clients while testing.
+
 ## Notes
 - Uses MediaPipe Pose world landmarks (3D). `stride` can downsample frames.
 - Requires Python + system deps for OpenCV; use `opencv-python-headless` to avoid GUI libs.
