@@ -13,6 +13,11 @@ class FrameLandmarks(BaseModel):
     frame_index: int
     poseLandmarks: List[Landmark]
     poseWorldLandmarks: List[Landmark]
+    leftHandLandmarks: List[Landmark] = []
+    rightHandLandmarks: List[Landmark] = []
+    leftHandWorldLandmarks: List[Landmark] = []
+    rightHandWorldLandmarks: List[Landmark] = []
+    faceLandmarks: List[Landmark] = []
     segmentationMask: Optional[str] = None  # always null in current export
 
 
@@ -27,8 +32,15 @@ class PoseExtractionResponse(BaseModel):
     metadata: Metadata
     poseLandmarks: List[Landmark]  # first frame convenience mirror
     poseWorldLandmarks: List[Landmark]  # first frame convenience mirror
+    leftHandLandmarks: List[Landmark] = []
+    rightHandLandmarks: List[Landmark] = []
+    leftHandWorldLandmarks: List[Landmark] = []
+    rightHandWorldLandmarks: List[Landmark] = []
+    faceLandmarks: List[Landmark] = []
     segmentationMask: Optional[str] = None
     landmarkIndices: Dict[int, str]
+    handLandmarkIndices: Dict[int, str]
+    faceLandmarkIndices: Dict[int, str]
     frames: List[FrameLandmarks]
     frame_count: int
     fps: float

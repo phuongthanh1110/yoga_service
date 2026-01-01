@@ -1,6 +1,7 @@
-# MediaPipe Pose Backend (FastAPI)
+# MediaPipe Holistic Backend (FastAPI)
 
-Extract MediaPipe Pose **world landmarks** from uploaded videos.
+Extract MediaPipe Holistic **pose + hands + face landmarks** from uploaded
+videos and expose them for 3D retargeting.
 
 ## Quick start
 
@@ -15,16 +16,31 @@ uvicorn main:app --reload --port 8000
 ## API
 
 - `POST /pose/extract?stride=1`  
-  Multipart form field `file` (video). Returns JSON:
+  Multipart form field `file` (video). Returns JSON (shortened):
   ```json
   {
+    "metadata": {...},
+    "poseLandmarks": [...],            // first-frame image coords
+    "poseWorldLandmarks": [...],       // first-frame world coords
+    "leftHandLandmarks": [...],
+    "rightHandLandmarks": [...],
+    "leftHandWorldLandmarks": [...],
+    "rightHandWorldLandmarks": [...],
+    "faceLandmarks": [...],
+    "landmarkIndices": {...},          // pose index->name
+    "handLandmarkIndices": {...},      // hand index->name
+    "faceLandmarkIndices": {...},      // face index->name
     "frames": [
       {
         "frame_index": 0,
-        "landmarks": [
-          {"x": 0.1, "y": -0.2, "z": -0.05, "visibility": 0.9},
-          ...
-        ]
+        "poseLandmarks": [...],
+        "poseWorldLandmarks": [...],
+        "leftHandLandmarks": [...],
+        "rightHandLandmarks": [...],
+        "leftHandWorldLandmarks": [...],
+        "rightHandWorldLandmarks": [...],
+        "faceLandmarks": [...],
+        "segmentationMask": null
       }
     ],
     "frame_count": 300,
