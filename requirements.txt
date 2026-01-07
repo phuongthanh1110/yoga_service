@@ -5,3 +5,5 @@ opencv-python-headless==4.10.0.84
 numpy>=1.23.0
 python-multipart>=0.0.9
 Pillow>=10.0.0
+# For pose comparison (AQA - Action Quality Assessment)
+scipy>=1.11.0
