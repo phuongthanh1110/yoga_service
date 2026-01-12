@@ -12,8 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import StreamingResponse
 
-from models import PoseExtractionResponse
+from models import PoseExtractionResponse, PoseCompareRequest, PoseCompareResponse
 from pose_processor import extract_world_landmarks
+from scoring import calculate_overall_score
 import asyncio
 
 app = FastAPI(title="MediaPipe Holistic Backend", version="1.0.0")
@@ -274,6 +275,83 @@ async def extract_pose_stream(file: UploadFile = File(...), stride: int = 1):
             "X-Accel-Buffering": "no",  # Disable buffering for nginx
         }
     )
+
+
+@app.post("/pose/compare", response_model=PoseCompareResponse)
+async def compare_poses(request: PoseCompareRequest):
+    """
+    Compare reference poses (model) with user poses and calculate score.
+    
+    Args:
+        request: Contains reference_frames, user_frames, and FPS info
+    
+    Returns:
+        ScoreResult with overall score, accuracy metrics, and feedback
+    """
+    try:
+        # Request now accepts dict frames directly (compact payloads OK).
+        # Ensure we always have poseWorldLandmarks key for scoring.
+        reference_frames = []
+        for frame in request.reference_frames:
+            if not isinstance(frame, dict):
+                continue
+            reference_frames.append(
+                {
+                    "frame_index": frame.get("frame_index", 0),
+                    "poseWorldLandmarks": frame.get("poseWorldLandmarks", []),
+                    "poseLandmarks": frame.get("poseLandmarks", []),
+                    "faceLandmarks": frame.get("faceLandmarks", []),
+                    "leftHandLandmarks": frame.get("leftHandLandmarks", []),
+                    "rightHandLandmarks": frame.get("rightHandLandmarks", []),
+                }
+            )
+
+        user_frames = []
+        for frame in request.user_frames:
+            if not isinstance(frame, dict):
+                continue
+            user_frames.append(
+                {
+                    "frame_index": frame.get("frame_index", 0),
+                    "poseWorldLandmarks": frame.get("poseWorldLandmarks", []),
+                    "poseLandmarks": frame.get("poseLandmarks", []),
+                    "faceLandmarks": frame.get("faceLandmarks", []),
+                    "leftHandLandmarks": frame.get("leftHandLandmarks", []),
+                    "rightHandLandmarks": frame.get("rightHandLandmarks", []),
+                }
+            )
+        
+        # Calculate score
+        score_result = calculate_overall_score(
+            reference_frames=reference_frames,
+            user_frames=user_frames,
+            reference_fps=request.reference_fps,
+            user_fps=request.user_fps,
+        )
+        
+        # Convert to response model
+        return PoseCompareResponse(
+            overall_score=score_result.overall_score,
+            angle_accuracy=score_result.angle_accuracy,
+            position_accuracy=score_result.position_accuracy,
+            stability_score=score_result.stability_score,
+            frame_scores=score_result.frame_scores,
+            feedback=[
+                {
+                    "frame_index": fb["frame_index"],
+                    "joint": fb["joint"],
+                    "error": fb["error"],
+                    "message": fb["message"],
+                }
+                for fb in score_result.feedback
+            ],
+        )
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Pose comparison failed: {str(e)}"
+        ) from e
 
 
 @app.get("/health")
